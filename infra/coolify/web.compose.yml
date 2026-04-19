@@ -1,0 +1,15 @@
+services:
+  web:
+    image: ghcr.io/yourorg/logwatch-web:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE}    # https://logs.example.com (public)
+      API_INTERNAL_URL: ${API_INTERNAL_URL}            # http://api:8080 (private, used for Next rewrites)
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "3000"

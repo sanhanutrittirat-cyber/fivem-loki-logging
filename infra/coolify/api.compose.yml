@@ -1,0 +1,26 @@
+services:
+  api:
+    image: ghcr.io/yourorg/logwatch-api:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      INGEST_API_TOKEN: ${INGEST_API_TOKEN}
+      INGEST_RPS: ${INGEST_RPS:-300}
+      SERVER_SECRETS_JSON: ${SERVER_SECRETS_JSON}
+      LOKI_URL: ${LOKI_URL}                       # e.g. http://loki:3100 (existing Loki, same Coolify network)
+      LOKI_TENANT_ID: ${LOKI_TENANT_ID:-}
+      LOKI_USERNAME: ${LOKI_USERNAME:-}
+      LOKI_PASSWORD: ${LOKI_PASSWORD:-}
+      CLICKHOUSE_URL: ${CLICKHOUSE_URL}            # http://clickhouse:8123
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-logwatch}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-logwatch}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      REDIS_URL: ${REDIS_URL}                      # redis://redis:6379
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "8080"

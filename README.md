@@ -1,24 +1,36 @@
-# fivem-loki-logging
-Automated logging setup for FiveM using Loki + Grafana with SSL certificates
+# FiveM Log Watcher
 
-<div align='center'><h1><a href='https://docs.illenium.dev/free-resources/fivem-loki-logging/setup'>Documentation</a></h3></div>
-<br>
+Production log watcher for FiveM/es_extended item, weapon, and money transactions.
+Ships logs to an existing **Loki** (cheap raw store, queried via existing Grafana)
+and to **ClickHouse** (fast filter + aggregate for the custom dashboard).
 
-![image](https://user-images.githubusercontent.com/104288623/234932495-71277281-a2e1-4fc5-8ec1-e864ae177543.png)
+```
+FiveM  ──HTTPS──▶  apps/api (Fastify)  ──┬──▶  Loki (existing)
+                                          ├──▶  ClickHouse
+                                          └──▶  Redis (rate-limit + cache)
+                                                 │
+                                       apps/web (Next.js watcher) ◀──── HTTP/SSE
+```
 
-## Features
+## Layout
 
-- Everything automated and running on Kubernetes
-- Loki preconfigured as a Datasource in Grafana
-- Retention support
-- Loki behind authentication layer
-- Pre-configured SSL with valid certificates (if you have a domain)
-- Ready to be used with ox_lib
+```
+apps/api          Fastify ingest + query API (TypeScript)
+apps/web          Next.js 14 watcher dashboard
+infra/clickhouse  init.sql (schema + rollups + TTL)
+infra/coolify     docker-compose stacks for Coolify
+fivem/logwatch_client  Drop-in FiveM resource (Lua sender)
+```
 
-## TL;DR (Only if you know what you're doing)
+## Quick start (local dev)
 
 ```bash
-git clone https://github.com/iLLeniumStudios/fivem-loki-logging
-cd fivem-loki-logging
-./install.sh
+cp .env.example .env
+docker compose -f infra/coolify/clickhouse.compose.yml up -d
+docker compose -f infra/coolify/redis.compose.yml up -d
+pnpm install
+pnpm dev:api    # http://localhost:8080
+pnpm dev:web    # http://localhost:3000
 ```
+
+See `infra/coolify/README.md` for production deploy on Coolify.
